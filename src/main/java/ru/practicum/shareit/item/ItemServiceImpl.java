@@ -1,10 +1,13 @@
 package ru.practicum.shareit.item;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.ForbiddenException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.UserMapper;
+import ru.practicum.shareit.user.UserService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,12 +19,14 @@ public class ItemServiceImpl implements ItemService {
 
     private HashMap<Long, Item> items = new HashMap();
     private long counter = 1;
+    @Autowired
+    private UserService userService;
 
     @Override
     public ItemDto createItem(ItemDto dto, long ownerId) {
         Item item = ItemMapper.toItem(dto);
         item.setId(counter++);
-        item.setOwnerId(ownerId);
+        item.setOwner(UserMapper.toUser(userService.getUser(ownerId)));
         items.put(item.getId(), item);
         return ItemMapper.toItemDto(item);
     }
@@ -43,7 +48,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> getItemsByOwner(long ownerId) {
         return items.values().stream()
-                .filter(item -> item.getOwnerId() == ownerId)
+                .filter(item -> item.getOwner().getId() == ownerId)
                 .map(ItemMapper::toItemDto).collect(Collectors.toList());
     }
 
@@ -66,7 +71,7 @@ public class ItemServiceImpl implements ItemService {
         if (item == null) {
             throw new NotFoundException("Item #" + itemId + " not found");
         }
-        if (item.getOwnerId() != ownerId) {
+        if (item.getOwner().getId() != ownerId) {
             throw new ForbiddenException("User #" + ownerId + " can't edit item #" + itemId);
         }
 
@@ -79,7 +84,7 @@ public class ItemServiceImpl implements ItemService {
         if (dto.getAvailable() != null) {
             item.setAvailable(dto.getAvailable());
         }
-        item.setOwnerId(ownerId);
+        item.setOwner(UserMapper.toUser(userService.getUser(ownerId)));
         items.put(item.getId(), item);
         return ItemMapper.toItemDto(item);
     }
@@ -90,7 +95,7 @@ public class ItemServiceImpl implements ItemService {
         if (old == null) {
             return null;
         }
-        if (old.getOwnerId() != ownerId) {
+        if (old.getOwner().getId() != ownerId) {
             return null;
         }
         items.remove(id);

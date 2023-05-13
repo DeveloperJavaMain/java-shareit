@@ -6,25 +6,27 @@ import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
-    private HashMap<Long, User> users = new HashMap<>();
+    private final HashMap<Long, User> users = new HashMap<>();
+    private final Set<String> emails = new HashSet<>();
     private long counter = 1;
 
     @Override
     public UserDto createUser(UserDto dto) {
         User user = UserMapper.toUser(dto);
         String email = user.getEmail();
-        if (users.values().stream()
-                .filter(u -> email.equalsIgnoreCase(u.getEmail()))
-                .findAny().isPresent()) {
+        if (emails.contains(email)) {
             throw new ConflictException("Такой email уже используется");
         }
         user.setId(counter++);
         users.put(user.getId(), user);
+        emails.add(user.getEmail());
         return UserMapper.toUserDto(user);
     }
 
@@ -53,12 +55,10 @@ public class UserServiceImpl implements UserService {
         }
         if (dto.getEmail() != null) {
             String email = dto.getEmail();
-            if (!email.equalsIgnoreCase(user.getEmail()) && users.values().stream()
-                    .filter(u -> email.equalsIgnoreCase(u.getEmail()))
-                    .findAny().isPresent()) {
+            if (!email.equalsIgnoreCase(user.getEmail()) && emails.contains(email)) {
                 throw new ConflictException("Такой email уже используется");
             }
-
+            emails.remove(user.getEmail());
             user.setEmail(dto.getEmail());
         }
         users.put(user.getId(), user);
@@ -67,6 +67,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto deleteUser(long id) {
+        UserDto user = getUser(id);
+        if (user.getEmail() != null) {
+            emails.remove(user.getEmail());
+        }
         return UserMapper.toUserDto(users.remove(id));
     }
 }
