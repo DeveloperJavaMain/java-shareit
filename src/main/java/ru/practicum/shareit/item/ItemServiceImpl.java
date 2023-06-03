@@ -4,36 +4,34 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.ForbiddenException;
 import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.item.dao.ItemRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.UserMapper;
-import ru.practicum.shareit.user.UserService;
+import ru.practicum.shareit.user.dao.UserRepository;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class ItemServiceImpl implements ItemService {
 
-    private HashMap<Long, Item> items = new HashMap();
-    private long counter = 1;
     @Autowired
-    private UserService userService;
+    private UserRepository userRepository;
+    @Autowired
+    private ItemRepository repository;
 
     @Override
     public ItemDto createItem(ItemDto dto, long ownerId) {
         Item item = ItemMapper.toItem(dto);
-        item.setId(counter++);
-        item.setOwner(UserMapper.toUser(userService.getUser(ownerId)));
-        items.put(item.getId(), item);
+        item.setOwner(userRepository.getReferenceById(ownerId));
+        repository.save(item);
         return ItemMapper.toItemDto(item);
     }
 
     @Override
     public ItemDto getItem(long id) {
-        Item item = items.get(id);
+        Item item = repository.getReferenceById(id);
         if (item == null) {
             throw new NotFoundException("Item #" + id + " not found");
         }
@@ -42,14 +40,16 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> getAllItems() {
-        return items.values().stream().map(ItemMapper::toItemDto).collect(Collectors.toList());
+        List<ItemDto> res = repository.findAll().stream().map(ItemMapper::toItemDto).collect(Collectors.toList());
+        return res;
     }
 
     @Override
     public List<ItemDto> getItemsByOwner(long ownerId) {
-        return items.values().stream()
+        List<ItemDto> res = repository.findAll().stream()
                 .filter(item -> item.getOwner().getId() == ownerId)
                 .map(ItemMapper::toItemDto).collect(Collectors.toList());
+        return res;
     }
 
     @Override
@@ -57,17 +57,14 @@ public class ItemServiceImpl implements ItemService {
         if (searchText == null || searchText.isEmpty()) {
             return new ArrayList<>();
         }
-        String text = searchText.toLowerCase();
-        return items.values().stream()
-                .filter(Item::isAvailable)
-                .filter(item -> item.getName().toLowerCase().contains(text) ||
-                        item.getDescription().toLowerCase().contains(text))
-                .map(ItemMapper::toItemDto).collect(Collectors.toList());
+        List<ItemDto> res = repository.search(searchText).
+                stream().map(ItemMapper::toItemDto).collect(Collectors.toList());
+        return res;
     }
 
     @Override
     public ItemDto updateItem(ItemDto dto, long itemId, long ownerId) {
-        Item item = items.get(itemId);
+        Item item = repository.getReferenceById(itemId);
         if (item == null) {
             throw new NotFoundException("Item #" + itemId + " not found");
         }
@@ -84,21 +81,21 @@ public class ItemServiceImpl implements ItemService {
         if (dto.getAvailable() != null) {
             item.setAvailable(dto.getAvailable());
         }
-        item.setOwner(UserMapper.toUser(userService.getUser(ownerId)));
-        items.put(item.getId(), item);
+        item.setOwner(userRepository.getReferenceById(ownerId));
+        repository.save(item);
         return ItemMapper.toItemDto(item);
     }
 
     @Override
     public ItemDto deleteItem(long id, long ownerId) {
-        Item old = items.get(id);
+        Item old = repository.getReferenceById(id);
         if (old == null) {
             return null;
         }
         if (old.getOwner().getId() != ownerId) {
             return null;
         }
-        items.remove(id);
+        repository.deleteById(id);
         return ItemMapper.toItemDto(old);
     }
 }

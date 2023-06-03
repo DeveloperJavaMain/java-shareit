@@ -1,38 +1,30 @@
 package ru.practicum.shareit.user;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.user.dao.UserRepository;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.model.User;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
-    private final HashMap<Long, User> users = new HashMap<>();
-    private final Set<String> emails = new HashSet<>();
-    private long counter = 1;
+    @Autowired
+    UserRepository repository;
 
     @Override
     public UserDto createUser(UserDto dto) {
         User user = UserMapper.toUser(dto);
-        String email = user.getEmail();
-        if (emails.contains(email)) {
-            throw new ConflictException("Такой email уже используется");
-        }
-        user.setId(counter++);
-        users.put(user.getId(), user);
-        emails.add(user.getEmail());
+        repository.save(user);
         return UserMapper.toUserDto(user);
     }
 
     @Override
     public UserDto getUser(long id) {
-        User user = users.get(id);
+        User user = repository.getReferenceById(id);
         if (user == null) {
             throw new NotFoundException("User #" + id + " not found");
         }
@@ -41,12 +33,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getAllUsers() {
-        return users.values().stream().map(UserMapper::toUserDto).collect(Collectors.toList());
+        List<UserDto> res = repository.findAll().stream()
+                .map(UserMapper::toUserDto).collect(Collectors.toList());
+        return res;
     }
 
     @Override
     public UserDto updateUser(UserDto dto, long userId) {
-        User user = users.get(userId);
+        User user = repository.getReferenceById(userId);
         if (user == null) {
             throw new NotFoundException("User #" + userId + " not found");
         }
@@ -55,22 +49,16 @@ public class UserServiceImpl implements UserService {
         }
         if (dto.getEmail() != null) {
             String email = dto.getEmail();
-            if (!email.equalsIgnoreCase(user.getEmail()) && emails.contains(email)) {
-                throw new ConflictException("Такой email уже используется");
-            }
-            emails.remove(user.getEmail());
             user.setEmail(dto.getEmail());
         }
-        users.put(user.getId(), user);
+        repository.save(user);
         return UserMapper.toUserDto(user);
     }
 
     @Override
     public UserDto deleteUser(long id) {
         UserDto user = getUser(id);
-        if (user.getEmail() != null) {
-            emails.remove(user.getEmail());
-        }
-        return UserMapper.toUserDto(users.remove(id));
+        repository.deleteById(id);
+        return user;
     }
 }

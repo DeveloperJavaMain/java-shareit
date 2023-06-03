@@ -30,6 +30,7 @@ public class ItemController {
         log.info("POST " + dto + " userId=" + userId);
 
         UserDto user = userService.getUser(userId);
+
         return service.createItem(dto, userId);
     }
 
