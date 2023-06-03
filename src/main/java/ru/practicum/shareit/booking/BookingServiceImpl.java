@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dao.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -43,6 +44,18 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public List<BookingDto> getListByBooker(long booker_id) {
+        List<Booking> list = repository.findByBooker_Id(booker_id, Sort.by(Sort.Direction.DESC, "start"));
+        return list.stream().map(BookingMapper::toBookingDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BookingDto> getListByOwner(long owner_id) {
+        List<Booking> list = repository.findByItemOwner(owner_id, Sort.by(Sort.Direction.DESC, "start"));
+        return list.stream().map(BookingMapper::toBookingDto).collect(Collectors.toList());
+    }
+
+    @Override
     public BookingDto update(BookingDto bookingDto, long booker_id) {
         Item item = itemRepository.getReferenceById(bookingDto.getItem_id());
         User user = userRepository.getReferenceById(booker_id);
@@ -59,8 +72,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingDto approve(long booking_id, long user_id, boolean approved) {
         Booking booking = repository.getReferenceById(booking_id);
-        if(booking.getBooker().getId()!=user_id) {
-            throw new ForbiddenException("User #"+user_id+" can't edit booking #"+booking_id);
+        if (booking.getBooker().getId() != user_id) {
+            throw new ForbiddenException("User #" + user_id + " can't edit booking #" + booking_id);
         }
         booking.setStatus((approved) ? BookingStatus.APPROVED : BookingStatus.REJECTED);
         return BookingMapper.toBookingDto(booking);
@@ -69,8 +82,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingDto getById(long id, long user_id) {
         Booking booking = repository.getReferenceById(id);
-        if(booking.getBooker().getId()!=user_id && booking.getItem().getOwner().getId()!=user_id) {
-            throw new ForbiddenException("User #"+user_id+" can't read booking #"+id);
+        if (booking.getBooker().getId() != user_id && booking.getItem().getOwner().getId() != user_id) {
+            throw new ForbiddenException("User #" + user_id + " can't read booking #" + id);
         }
         return BookingMapper.toBookingDto(repository.getReferenceById(id));
     }
