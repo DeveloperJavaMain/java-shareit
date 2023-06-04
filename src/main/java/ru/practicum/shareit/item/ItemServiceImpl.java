@@ -1,14 +1,26 @@
 package ru.practicum.shareit.item;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.BookingMapper;
+import ru.practicum.shareit.booking.dao.BookingRepository;
+import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.exceptions.ForbiddenException;
 import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.item.dao.CommentRepository;
 import ru.practicum.shareit.item.dao.ItemRepository;
+import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.CommentDtoPost;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserRepository;
+import ru.practicum.shareit.user.model.User;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,6 +32,11 @@ public class ItemServiceImpl implements ItemService {
     private UserRepository userRepository;
     @Autowired
     private ItemRepository repository;
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Override
     public ItemDto createItem(ItemDto dto, long ownerId) {
@@ -35,12 +52,21 @@ public class ItemServiceImpl implements ItemService {
         if (item == null) {
             throw new NotFoundException("Item #" + id + " not found");
         }
-        return ItemMapper.toItemDto(item);
+        ItemDto res = ItemMapper.toItemDto(item);
+        setBookings(res);
+        res.setComments(getCommentsForItem(id));
+        return res;
     }
 
     @Override
     public List<ItemDto> getAllItems() {
-        List<ItemDto> res = repository.findAll().stream().map(ItemMapper::toItemDto).collect(Collectors.toList());
+        List<ItemDto> res = repository.findAll().stream()
+                .map(ItemMapper::toItemDto)
+                .map(item -> {
+                    item.setComments(getCommentsForItem(item.getId()));
+                    return item;
+                })
+                .collect(Collectors.toList());
         return res;
     }
 
@@ -49,7 +75,23 @@ public class ItemServiceImpl implements ItemService {
         List<ItemDto> res = repository.findAll().stream()
                 .filter(item -> item.getOwner().getId() == ownerId)
                 .map(ItemMapper::toItemDto).collect(Collectors.toList());
+
+        for (ItemDto item : res) {
+            setBookings(item);
+        }
         return res;
+    }
+
+    private final Sort sortDesc = Sort.by("start").descending();
+    private final Sort sortAsc = Sort.by("start").ascending();
+
+    private ItemDto setBookings(ItemDto item) {
+        LocalDateTime now = LocalDateTime.now();
+        Booking last = bookingRepository.findFirstByItemIdAndEndBefore(item.getId(), now, sortDesc);
+        Booking next = bookingRepository.findFirstByItemIdAndStartAfter(item.getId(), now, sortAsc);
+        item.setLastBooking(BookingMapper.toBookingDtoItem(last));
+        item.setNextBooking(BookingMapper.toBookingDtoItem(next));
+        return item;
     }
 
     @Override
@@ -58,7 +100,10 @@ public class ItemServiceImpl implements ItemService {
             return new ArrayList<>();
         }
         List<ItemDto> res = repository.search(searchText).
-                stream().map(ItemMapper::toItemDto).collect(Collectors.toList());
+                stream()
+                .filter(Item::isAvailable)
+                .map(ItemMapper::toItemDto)
+                .collect(Collectors.toList());
         return res;
     }
 
@@ -98,4 +143,28 @@ public class ItemServiceImpl implements ItemService {
         repository.deleteById(id);
         return ItemMapper.toItemDto(old);
     }
+
+    @Override
+    public CommentDto createComment(CommentDtoPost dto, Long itemId, Long userId) {
+        Item item = repository.findById(itemId).orElseThrow();
+        User user = userRepository.findById(userId).orElseThrow();
+        Booking booking = bookingRepository.findByBookerIdAndEndBefore(userId, LocalDateTime.now())
+                .stream().findAny().orElseThrow();
+        Comment comment = Comment.builder()
+                .text(dto.getText())
+                .item(item)
+                .author(user)
+                .created(LocalDateTime.now())
+                .build();
+        comment = commentRepository.save(comment);
+        return CommentMapper.toCommentDto(comment);
+    }
+
+    private List<CommentDto> getCommentsForItem(Long item_id) {
+        List<CommentDto> res = commentRepository.findByItemId(item_id).stream()
+                .map(CommentMapper::toCommentDto)
+                .collect(Collectors.toList());
+        return res;
+    }
+
 }

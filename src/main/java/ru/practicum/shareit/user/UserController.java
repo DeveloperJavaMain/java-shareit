@@ -29,30 +29,31 @@ public class UserController {
 
     @PostMapping
     public UserDto addUser(@Valid @RequestBody UserDto user) {
+        log.info("POST /users/ {}", user);
         return service.createUser(user);
     }
 
     @PatchMapping("/{userId}")
     public UserDto updateUser(@RequestBody UserDto user, @PathVariable long userId) {
-        log.info("PATCH / userId={} {}", userId, user);
+        log.info("PATCH /users/ userId={} {}", userId, user);
         return service.updateUser(user, userId);
     }
 
     @DeleteMapping("/{userId}")
     public void deleteUserById(@PathVariable long userId) {
-        log.info("DELETE / userId=" + userId);
+        log.info("DELETE /users/ userId=" + userId);
         service.deleteUser(userId);
     }
 
     @GetMapping("/{id}")
     public UserDto findUserById(@PathVariable long id) {
-        log.info("GET /{}", id);
+        log.info("GET /users/{}", id);
         return service.getUser(id);
     }
 
     @GetMapping
     public List<UserDto> getAllUsers() {
-        log.info("GET /");
+        log.info("GET /users/");
         return service.getAllUsers();
     }
 

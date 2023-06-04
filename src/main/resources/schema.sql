@@ -3,11 +3,11 @@ DROP ALL OBJECTS;
 create table IF NOT EXISTS USERS
 (
     ID  INTEGER not null auto_increment,
-    NAME     VARCHAR(50),
-    EMAIL    VARCHAR(50),
+    NAME     VARCHAR(50) not NULL,
+    EMAIL    VARCHAR(50) not NULL,
 
     CONSTRAINT USERS_PK primary key (ID),
-    CONSTRAINT UQ_USER_EMAIL UNIQUE (email)
+    CONSTRAINT UQ_USER_EMAIL UNIQUE (EMAIL)
 );
 
 create table IF NOT EXISTS ITEMS

@@ -18,14 +18,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BookingDto {
+public class BookingDtoResponse {
     private long id;
     @NotNull
-    private LocalDateTime start;
-    @NotNull
-    private LocalDateTime end;
-    @NotNull
     private ItemDto item;
+    @NotNull
     private UserDto booker;
+    @NotNull
     private BookingStatus status;
 }
