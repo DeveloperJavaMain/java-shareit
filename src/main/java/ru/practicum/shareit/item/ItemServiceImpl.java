@@ -4,8 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.BookingMapper;
+import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.dao.BookingRepository;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.exceptions.BadRequestException;
 import ru.practicum.shareit.exceptions.ForbiddenException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.dao.CommentRepository;
@@ -45,13 +47,15 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto getItem(long id) {
+    public ItemDto getItem(long id, Long userId) {
         Item item = repository.getReferenceById(id);
         if (item == null) {
             throw new NotFoundException("Item #" + id + " not found");
         }
         ItemDto res = ItemMapper.toItemDto(item);
-        setBookings(res);
+        if (item.getOwner().getId() == userId) {
+            setBookings(res);
+        }
         res.setComments(getCommentsForItem(id));
         return res;
     }
@@ -85,8 +89,8 @@ public class ItemServiceImpl implements ItemService {
 
     private ItemDto setBookings(ItemDto item) {
         LocalDateTime now = LocalDateTime.now();
-        Booking last = bookingRepository.findFirstByItemIdAndEndBefore(item.getId(), now, sortDesc);
-        Booking next = bookingRepository.findFirstByItemIdAndStartAfter(item.getId(), now, sortAsc);
+        Booking last = bookingRepository.findFirstByItemIdAndStartBeforeAndStatus(item.getId(), now, BookingStatus.APPROVED, sortDesc);
+        Booking next = bookingRepository.findFirstByItemIdAndStartAfterAndStatus(item.getId(), now, BookingStatus.APPROVED, sortAsc);
         item.setLastBooking(BookingMapper.toBookingDtoItem(last));
         item.setNextBooking(BookingMapper.toBookingDtoItem(next));
         return item;
@@ -147,7 +151,7 @@ public class ItemServiceImpl implements ItemService {
         Item item = repository.findById(itemId).orElseThrow();
         User user = userRepository.findById(userId).orElseThrow();
         Booking booking = bookingRepository.findByBookerIdAndEndBefore(userId, LocalDateTime.now())
-                .stream().findAny().orElseThrow();
+                .stream().findAny().orElseThrow(() -> new BadRequestException("No Bookings"));
         Comment comment = Comment.builder()
                 .text(dto.getText())
                 .item(item)

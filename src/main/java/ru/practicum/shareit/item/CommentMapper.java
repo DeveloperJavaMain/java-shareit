@@ -11,7 +11,7 @@ public class CommentMapper {
                 .id(comment.getId())
                 .text(comment.getText())
                 .itemId(comment.getItem().getId())
-                .authorId(comment.getAuthor().getId())
+                .authorName(comment.getAuthor().getName())
                 .created(comment.getCreated())
                 .build();
     }

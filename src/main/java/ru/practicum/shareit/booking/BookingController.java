@@ -89,6 +89,14 @@ public class BookingController {
                 return list.stream().filter(item -> item.getStatus() == BookingStatus.WAITING).collect(Collectors.toList());
             case REJECTED:
                 return list.stream().filter(item -> item.getStatus() == BookingStatus.REJECTED).collect(Collectors.toList());
+            case CURRENT:
+                log.info("CURRENT before: {}", list);
+                List<BookingDto> res = list.stream()
+                        .filter(item -> !now.isBefore(item.getStart()))
+                        .filter(item -> !now.isAfter(item.getEnd()))
+                        .collect(Collectors.toList());
+                log.info("CURRENT after: {}", res);
+                return res;
             default:
                 return list;
         }
