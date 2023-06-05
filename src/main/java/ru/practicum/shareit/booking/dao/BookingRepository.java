@@ -8,9 +8,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-    List<Booking> findByBooker_Id(Long booker_id, Sort sort);
+    List<Booking> findByBooker_Id(Long bookerId, Sort sort);
 
-    boolean existsByBooker_Id(Long booker_id);
+    boolean existsByBooker_Id(Long bookerId);
 
     List<Booking> findByItemOwnerId(Long bookerId, Sort sort);
 

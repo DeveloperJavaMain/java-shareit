@@ -10,8 +10,8 @@ public class CommentMapper {
         return CommentDto.builder()
                 .id(comment.getId())
                 .text(comment.getText())
-                .item_id(comment.getItem().getId())
-                .author_id(comment.getAuthor().getId())
+                .itemId(comment.getItem().getId())
+                .authorId(comment.getAuthor().getId())
                 .created(comment.getCreated())
                 .build();
     }

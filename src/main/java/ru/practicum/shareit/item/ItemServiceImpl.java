@@ -5,7 +5,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.BookingMapper;
 import ru.practicum.shareit.booking.dao.BookingRepository;
-import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.exceptions.ForbiddenException;
 import ru.practicum.shareit.exceptions.NotFoundException;
@@ -19,7 +18,6 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,8 +97,8 @@ public class ItemServiceImpl implements ItemService {
         if (searchText == null || searchText.isEmpty()) {
             return new ArrayList<>();
         }
-        List<ItemDto> res = repository.search(searchText).
-                stream()
+        List<ItemDto> res = repository.search(searchText)
+                .stream()
                 .filter(Item::isAvailable)
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());

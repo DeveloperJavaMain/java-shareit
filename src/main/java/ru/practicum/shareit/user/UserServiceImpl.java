@@ -3,12 +3,10 @@ package ru.practicum.shareit.user;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.user.dao.UserRepository;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,9 +41,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto updateUser(UserDto dto, long userId) {
         User user = repository.getReferenceById(userId);
-//        if (user == null) {
-//            throw new NotFoundException("User #" + userId + " not found");
-//        }
         if (dto.getName() != null) {
             user.setName(dto.getName());
         }
