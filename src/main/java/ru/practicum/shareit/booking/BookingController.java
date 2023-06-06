@@ -33,7 +33,8 @@ public class BookingController {
     private BookingService service;
 
     @PostMapping
-    public BookingDto create(@Valid @RequestBody BookingDtoPost dto, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public BookingDto create(@Valid @RequestBody BookingDtoPost dto,
+                             @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("POST /bookings " + dto + " userId=" + userId);
         BookingDto bookingDto = service.create(dto, userId);
         log.info("{}", bookingDto);
@@ -43,7 +44,7 @@ public class BookingController {
     @PatchMapping("/{itemId}")
     public BookingDto updateItem(@PathVariable long itemId,
                                  @RequestParam Boolean approved,
-                                 @RequestHeader("X-Sharer-User-Id") long userId) {
+                                 @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("PATCH /bookings/{} {}", itemId, approved);
         BookingDto dto = service.approve(itemId, userId, approved);
         log.info("{}", dto);
@@ -51,20 +52,23 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
-    public BookingDto getItemById(@PathVariable long id, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public BookingDto getItemById(@PathVariable long id,
+                                  @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /bookings/{}", id);
         return service.getById(id, userId);
     }
 
     @GetMapping
-    public List<BookingDto> getList(@RequestParam(required = false, defaultValue = "ALL") String state, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<BookingDto> getList(@RequestParam(required = false, defaultValue = "ALL") String state,
+                                    @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /bookings/state={}", state);
         List<BookingDto> list = service.getListByBooker(userId);
         return filterByState(list, state);
     }
 
     @GetMapping("/owner")
-    public List<BookingDto> getListByOwner(@RequestParam(required = false, defaultValue = "ALL") String state, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<BookingDto> getListByOwner(@RequestParam(required = false, defaultValue = "ALL") String state,
+                                           @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /bookings/state={}", state);
         List<BookingDto> list = service.getListByOwner(userId);
         return filterByState(list, state);

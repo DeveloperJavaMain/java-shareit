@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUser(long id) {
-        User user = repository.getReferenceById(id);
+        User user = repository.findById(id).orElseThrow();
         return UserMapper.toUserDto(user);
     }
 
@@ -40,7 +40,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(UserDto dto, long userId) {
-        User user = repository.getReferenceById(userId);
+        User user = repository.findById(userId).orElseThrow();
         if (dto.getName() != null) {
             user.setName(dto.getName());
         }

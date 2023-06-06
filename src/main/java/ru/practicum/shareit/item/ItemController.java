@@ -28,8 +28,8 @@ public class ItemController {
     private UserService userService;
 
     @PostMapping
-    public ItemDto addItem(@Valid @RequestBody ItemDto dto, @RequestHeader("X-Sharer-User-Id") long userId) {
-        log.info("POST /items" + dto + " userId=" + userId);
+    public ItemDto addItem(@Valid @RequestBody ItemDto dto, @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
+        log.info("POST /items " + dto + " userId=" + userId);
 
         UserDto user = userService.getUser(userId);
 
@@ -39,27 +39,27 @@ public class ItemController {
     @PatchMapping("/{itemId}")
     public ItemDto updateItem(@RequestBody ItemDto dto,
                               @PathVariable long itemId,
-                              @RequestHeader("X-Sharer-User-Id") long userId) {
+                              @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("PATCH /items/{}/", itemId);
         UserDto user = userService.getUser(userId);
         return service.updateItem(dto, itemId, userId);
     }
 
     @DeleteMapping("/{itemId}")
-    public void deleteItem(@PathVariable long itemId, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public void deleteItem(@PathVariable long itemId, @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("DELETE /items/{}/", itemId);
         UserDto user = userService.getUser(userId);
         service.deleteItem(itemId, userId);
     }
 
     @GetMapping("/{id}")
-    public ItemDto getItemById(@PathVariable long id, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public ItemDto getItemById(@PathVariable long id, @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /items/{}/", id);
         return service.getItem(id, userId);
     }
 
     @GetMapping
-    public List<ItemDto> getItemsByOwner(@RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<ItemDto> getItemsByOwner(@Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /items/ userId=" + userId);
         UserDto user = userService.getUser(userId);
         return service.getItemsByOwner(userId);
@@ -74,7 +74,7 @@ public class ItemController {
     @PostMapping("/{itemId}/comment")
     public CommentDto createComment(@Valid @RequestBody CommentDtoPost text,
                                     @PathVariable Long itemId,
-                                    @RequestHeader("X-Sharer-User-Id") Long userId) {
+                                    @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("POST /items/{}/comment {}", itemId, text);
         return service.createComment(text, itemId, userId);
     }
