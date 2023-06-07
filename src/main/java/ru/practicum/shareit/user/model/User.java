@@ -10,11 +10,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-
-
-/**
- * TODO Sprint add-controllers.
- */
+import javax.validation.constraints.Size;
 
 @Entity
 @Table(name = "users")
@@ -25,8 +21,10 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+    @Size(max = 50)
     @Column(nullable = false)
     private String name;
+    @Size(max = 50)
     @Column(nullable = false, unique = true)
     private String email;
 }

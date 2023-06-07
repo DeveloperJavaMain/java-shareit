@@ -8,21 +8,13 @@ import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.dto.UserDto;
 
-import javax.validation.constraints.NotNull;
-
-/**
- * TODO Sprint add-bookings.
- */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class BookingDtoResponse {
     private long id;
-    @NotNull
     private ItemDto item;
-    @NotNull
     private UserDto booker;
-    @NotNull
     private BookingStatus status;
 }

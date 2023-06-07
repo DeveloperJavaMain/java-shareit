@@ -27,4 +27,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByBookerIdAndEndBefore(Long bookerId, LocalDateTime now);
 
+    boolean existsByBookerIdAndEndBefore(Long bookerId, LocalDateTime now);
+
 }

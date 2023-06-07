@@ -13,17 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoPost;
-import ru.practicum.shareit.booking.dto.State;
-import ru.practicum.shareit.exceptions.StatusException;
 
 import javax.validation.Valid;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * TODO Sprint add-bookings.
- */
 @Slf4j
 @RestController
 @RequestMapping(path = "/bookings")
@@ -34,8 +27,8 @@ public class BookingController {
 
     @PostMapping
     public BookingDto create(@Valid @RequestBody BookingDtoPost dto,
-                             @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
-        log.info("POST /bookings " + dto + " userId=" + userId);
+                             @RequestHeader("X-Sharer-User-Id") Long userId) {
+        log.info("POST /bookings {} userId={}", dto, userId);
         BookingDto bookingDto = service.create(dto, userId);
         log.info("{}", bookingDto);
         return bookingDto;
@@ -44,7 +37,7 @@ public class BookingController {
     @PatchMapping("/{itemId}")
     public BookingDto updateItem(@PathVariable long itemId,
                                  @RequestParam Boolean approved,
-                                 @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
+                                 @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("PATCH /bookings/{} {}", itemId, approved);
         BookingDto dto = service.approve(itemId, userId, approved);
         log.info("{}", dto);
@@ -53,57 +46,25 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public BookingDto getItemById(@PathVariable long id,
-                                  @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
+                                  @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /bookings/{}", id);
         return service.getById(id, userId);
     }
 
     @GetMapping
     public List<BookingDto> getList(@RequestParam(required = false, defaultValue = "ALL") String state,
-                                    @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
+                                    @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /bookings/state={}", state);
-        List<BookingDto> list = service.getListByBooker(userId);
-        return filterByState(list, state);
+
+        List<BookingDto> list = service.getListByBooker(userId, state);
+        return list;
     }
 
     @GetMapping("/owner")
-    public List<BookingDto> getListByOwner(@RequestParam(required = false, defaultValue = "ALL") String state,
-                                           @Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public List<BookingDto> getListByOwner(@RequestParam(defaultValue = "ALL") String state,
+                                           @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /bookings/state={}", state);
-        List<BookingDto> list = service.getListByOwner(userId);
-        return filterByState(list, state);
+        List<BookingDto> list = service.getListByOwner(userId, state);
+        return list;
     }
-
-    private List<BookingDto> filterByState(List<BookingDto> list, String stateName) {
-
-        State state;
-        try {
-            state = State.valueOf(stateName);
-        } catch (IllegalArgumentException e) {
-            throw new StatusException("Unknown state: " + stateName);
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        switch (state) {
-            case FUTURE:
-                return list.stream().filter(item -> now.isBefore(item.getStart())).collect(Collectors.toList());
-            case PAST:
-                return list.stream().filter(item -> now.isAfter(item.getEnd())).collect(Collectors.toList());
-            case WAITING:
-                return list.stream().filter(item -> item.getStatus() == BookingStatus.WAITING).collect(Collectors.toList());
-            case REJECTED:
-                return list.stream().filter(item -> item.getStatus() == BookingStatus.REJECTED).collect(Collectors.toList());
-            case CURRENT:
-                log.info("CURRENT before: {}", list);
-                List<BookingDto> res = list.stream()
-                        .filter(item -> !now.isBefore(item.getStart()))
-                        .filter(item -> !now.isAfter(item.getEnd()))
-                        .collect(Collectors.toList());
-                log.info("CURRENT after: {}", res);
-                return res;
-            default:
-                return list;
-        }
-    }
-
 }

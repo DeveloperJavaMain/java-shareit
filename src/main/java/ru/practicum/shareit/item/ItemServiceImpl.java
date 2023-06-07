@@ -1,30 +1,37 @@
 package ru.practicum.shareit.item;
 
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.BookingMapper;
 import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.dao.BookingRepository;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.exceptions.BadRequestException;
 import ru.practicum.shareit.exceptions.ForbiddenException;
+import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.dao.CommentRepository;
 import ru.practicum.shareit.item.dao.ItemRepository;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.CommentDtoPost;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoPost;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ItemServiceImpl implements ItemService {
 
     @Autowired
@@ -38,16 +45,21 @@ public class ItemServiceImpl implements ItemService {
     private CommentRepository commentRepository;
 
     @Override
-    public ItemDto createItem(ItemDto dto, long ownerId) {
+    @Transactional
+    public ItemDto createItem(ItemDtoPost dto, long ownerId) {
         Item item = ItemMapper.toItem(dto);
-        item.setOwner(userRepository.findById(ownerId).orElseThrow());
+        item.setOwner(userRepository.findById(ownerId)
+                .orElseThrow(() -> new NotFoundException("User #" + ownerId + " not found")));
         repository.save(item);
         return ItemMapper.toItemDto(item);
     }
 
     @Override
     public ItemDto getItem(long id, Long userId) {
-        Item item = repository.findById(id).orElseThrow();
+        Item item = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Item #" + id + " not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User #" + userId + " not found"));
         ItemDto res = ItemMapper.toItemDto(item);
         if (item.getOwner().getId() == userId) {
             setBookings(res);
@@ -56,23 +68,25 @@ public class ItemServiceImpl implements ItemService {
         return res;
     }
 
-    @Override
-    public List<ItemDto> getAllItems() {
-        List<ItemDto> res = repository.findAll().stream()
-                .map(ItemMapper::toItemDto)
-                .map(item -> {
-                    item.setComments(getCommentsForItem(item.getId()));
-                    return item;
-                })
-                .collect(Collectors.toList());
-        return res;
-    }
-
+    /*
+        @Override
+        public List<ItemDto> getAllItems() {
+            List<ItemDto> res = repository.findAll().stream()
+                    .map(ItemMapper::toItemDto)
+                    .map(item -> {
+                        item.setComments(getCommentsForItem(item.getId()));
+                        return item;
+                    })
+                    .collect(Collectors.toList());
+            return res;
+        }
+    */
     @Override
     public List<ItemDto> getItemsByOwner(long ownerId) {
         List<ItemDto> res = repository.findAll().stream()
                 .filter(item -> item.getOwner().getId() == ownerId)
-                .map(ItemMapper::toItemDto).collect(Collectors.toList());
+                .map(ItemMapper::toItemDto)
+                .collect(Collectors.toList());
 
         for (ItemDto item : res) {
             setBookings(item);
@@ -82,8 +96,8 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> search(String searchText) {
-        if (searchText == null || searchText.isEmpty()) {
-            return new ArrayList<>();
+        if (searchText.isBlank()) {
+            return List.of();
         }
         List<ItemDto> res = repository.search(searchText)
                 .stream()
@@ -94,16 +108,19 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto updateItem(ItemDto dto, long itemId, long ownerId) {
-        Item item = repository.findById(itemId).orElseThrow();
-        User user = userRepository.findById(ownerId).orElseThrow();
+    @Transactional
+    public ItemDto updateItem(ItemDtoPost dto, long itemId, long ownerId) {
+        Item item = repository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Item #" + itemId + " not found"));
+        User user = userRepository.findById(ownerId)
+                .orElseThrow(() -> new NotFoundException("User #" + ownerId + " not found"));
         if (item.getOwner().getId() != ownerId) {
             throw new ForbiddenException("User #" + ownerId + " can't edit item #" + itemId);
         }
-        if (dto.getName() != null) {
+        if (dto.getName() != null && !dto.getName().isBlank()) {
             item.setName(dto.getName());
         }
-        if (dto.getDescription() != null) {
+        if (dto.getDescription() != null && !dto.getDescription().isBlank()) {
             item.setDescription(dto.getDescription());
         }
         if (dto.getAvailable() != null) {
@@ -115,6 +132,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public ItemDto deleteItem(long id, long ownerId) {
         Item old = repository.findById(id).orElseThrow();
         if (old.getOwner().getId() != ownerId) {
@@ -125,11 +143,15 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public CommentDto createComment(CommentDtoPost dto, Long itemId, Long userId) {
         Item item = repository.findById(itemId).orElseThrow();
         User user = userRepository.findById(userId).orElseThrow();
-        Booking booking = bookingRepository.findByBookerIdAndEndBefore(userId, LocalDateTime.now())
-                .stream().findAny().orElseThrow(() -> new BadRequestException("No Bookings"));
+//        Booking booking = bookingRepository.findByBookerIdAndEndBefore(userId, LocalDateTime.now())
+//                .stream().findAny().orElseThrow(() -> new BadRequestException("No Bookings"));
+        if (!bookingRepository.existsByBookerIdAndEndBefore(userId, LocalDateTime.now())) {
+            throw new BadRequestException("No Bookings");
+        }
         Comment comment = Comment.builder()
                 .text(dto.getText())
                 .item(item)
