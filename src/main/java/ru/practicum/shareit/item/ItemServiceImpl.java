@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.BookingMapper;
 import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.dao.BookingRepository;
+import ru.practicum.shareit.booking.dto.BookingDtoItem;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.exceptions.BadRequestException;
 import ru.practicum.shareit.exceptions.ForbiddenException;
@@ -26,7 +27,10 @@ import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @Service
 @AllArgsConstructor
@@ -43,6 +47,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    private final Sort sortDesc = Sort.by("start").descending();
+    private final Sort sortAsc = Sort.by("start").ascending();
 
     @Override
     @Transactional
@@ -68,28 +75,37 @@ public class ItemServiceImpl implements ItemService {
         return res;
     }
 
-    /*
-        @Override
-        public List<ItemDto> getAllItems() {
-            List<ItemDto> res = repository.findAll().stream()
-                    .map(ItemMapper::toItemDto)
-                    .map(item -> {
-                        item.setComments(getCommentsForItem(item.getId()));
-                        return item;
-                    })
-                    .collect(Collectors.toList());
-            return res;
-        }
-    */
+    private BookingDtoItem getFirstBookingDtoItem(List<Booking> list) {
+        return (list != null && list.size() > 0) ? BookingMapper.toBookingDtoItem(list.get(0)) : null;
+    }
+
     @Override
     public List<ItemDto> getItemsByOwner(long ownerId) {
-        List<ItemDto> res = repository.findAll().stream()
-                .filter(item -> item.getOwner().getId() == ownerId)
+        List<ItemDto> res = repository.findByOwnerId(ownerId).stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
+        List<Long> itemIds = res.stream().map(ItemDto::getId).collect(Collectors.toList());
+        LocalDateTime now = LocalDateTime.now();
+
+        Map<Long, List<CommentDto>> comments = commentRepository.findByItem_IdIn(itemIds, Sort.by(DESC, "created"))
+                .stream()
+                .map(CommentMapper::toCommentDto)
+                .collect(Collectors.groupingBy(c -> c.getItemId(), Collectors.toList()));
+
+        Map<Long, List<Booking>> lastBookings = bookingRepository
+                .findByItemIdInAndStartBeforeAndStatus(itemIds, now, BookingStatus.APPROVED, sortDesc)
+                .stream()
+                .collect(Collectors.groupingBy(c -> c.getItem().getId(), Collectors.toList()));
+
+        Map<Long, List<Booking>> nextBookings = bookingRepository
+                .findByItemIdInAndStartAfterAndStatus(itemIds, now, BookingStatus.APPROVED, sortAsc)
+                .stream()
+                .collect(Collectors.groupingBy(c -> c.getItem().getId(), Collectors.toList()));
 
         for (ItemDto item : res) {
-            setBookings(item);
+            item.setComments(comments.get(item.getId()));
+            item.setLastBooking(getFirstBookingDtoItem(lastBookings.get(item.getId())));
+            item.setNextBooking(getFirstBookingDtoItem(nextBookings.get(item.getId())));
         }
         return res;
     }
@@ -101,7 +117,6 @@ public class ItemServiceImpl implements ItemService {
         }
         List<ItemDto> res = repository.search(searchText)
                 .stream()
-                .filter(Item::isAvailable)
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
         return res;
@@ -147,8 +162,6 @@ public class ItemServiceImpl implements ItemService {
     public CommentDto createComment(CommentDtoPost dto, Long itemId, Long userId) {
         Item item = repository.findById(itemId).orElseThrow();
         User user = userRepository.findById(userId).orElseThrow();
-//        Booking booking = bookingRepository.findByBookerIdAndEndBefore(userId, LocalDateTime.now())
-//                .stream().findAny().orElseThrow(() -> new BadRequestException("No Bookings"));
         if (!bookingRepository.existsByBookerIdAndEndBefore(userId, LocalDateTime.now())) {
             throw new BadRequestException("No Bookings");
         }
@@ -169,9 +182,6 @@ public class ItemServiceImpl implements ItemService {
         return res;
     }
 
-    private final Sort sortDesc = Sort.by("start").descending();
-    private final Sort sortAsc = Sort.by("start").ascending();
-
     private ItemDto setBookings(ItemDto item) {
         LocalDateTime now = LocalDateTime.now();
         Booking last = bookingRepository.findFirstByItemIdAndStartBeforeAndStatus(item.getId(), now, BookingStatus.APPROVED, sortDesc);
@@ -180,5 +190,4 @@ public class ItemServiceImpl implements ItemService {
         item.setNextBooking(BookingMapper.toBookingDtoItem(next));
         return item;
     }
-
 }

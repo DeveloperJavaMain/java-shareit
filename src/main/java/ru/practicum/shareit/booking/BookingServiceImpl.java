@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @AllArgsConstructor
+@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BookingServiceImpl implements BookingService {
 
@@ -36,6 +38,8 @@ public class BookingServiceImpl implements BookingService {
     private ItemRepository itemRepository;
     @Autowired
     private UserRepository userRepository;
+
+    private final Sort sortDesc = Sort.by(Sort.Direction.DESC, "start");
 
     @Override
     @Transactional
@@ -72,22 +76,71 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getListByBooker(long bookerId, String state) {
+    public List<BookingDto> getListByBooker(long bookerId, String stateName) {
         User user = userRepository.findById(bookerId)
                 .orElseThrow(() -> new NotFoundException("User #" + bookerId + " not found"));
-        List<Booking> list = repository.findByBooker_Id(bookerId, Sort.by(Sort.Direction.DESC, "start"));
+        List<Booking> list;
+
+        State state = getState(stateName);
+        LocalDateTime now = LocalDateTime.now();
+
+        switch (state) {
+            case FUTURE:
+                list = repository.findByBookerIdAndStartAfter(bookerId, now, sortDesc);
+                break;
+            case PAST:
+                list = repository.findByBookerIdAndEndBefore(bookerId, now, sortDesc);
+                break;
+            case WAITING:
+                list = repository.findByBookerIdAndStatus(bookerId, BookingStatus.WAITING, sortDesc);
+                break;
+            case REJECTED:
+                list = repository.findByBookerIdAndStatus(bookerId, BookingStatus.REJECTED, sortDesc);
+                break;
+            case CURRENT:
+                list = repository.findByBookerIdAndStartBeforeAndEndAfter(bookerId, now, now, sortDesc);
+                break;
+            default:
+                list = repository.findByBooker_Id(bookerId, sortDesc);
+        }
+
         List<BookingDto> res = list.stream().map(BookingMapper::toBookingDto)
                 .collect(Collectors.toList());
-        return filterByState(res, state);
+        return res;
     }
 
     @Override
-    public List<BookingDto> getListByOwner(long ownerId, String state) {
+    public List<BookingDto> getListByOwner(long ownerId, String stateName) {
         User user = userRepository.findById(ownerId)
                 .orElseThrow(() -> new NotFoundException("User #" + ownerId + " not found"));
-        List<Booking> list = repository.findByItemOwnerId(ownerId, Sort.by(Sort.Direction.DESC, "start"));
-        List<BookingDto> res = list.stream().map(BookingMapper::toBookingDto).collect(Collectors.toList());
-        return filterByState(res, state);
+        List<Booking> list;
+
+        State state = getState(stateName);
+        LocalDateTime now = LocalDateTime.now();
+
+        switch (state) {
+            case FUTURE:
+                list = repository.findByItemOwnerIdAndStartAfter(ownerId, now, sortDesc);
+                break;
+            case PAST:
+                list = repository.findByItemOwnerIdAndEndBefore(ownerId, now, sortDesc);
+                break;
+            case WAITING:
+                list = repository.findByItemOwnerIdAndStatus(ownerId, BookingStatus.WAITING, sortDesc);
+                break;
+            case REJECTED:
+                list = repository.findByItemOwnerIdAndStatus(ownerId, BookingStatus.REJECTED, sortDesc);
+                break;
+            case CURRENT:
+                list = repository.findByItemOwnerIdAndStartBeforeAndEndAfter(ownerId, now, now, sortDesc);
+                break;
+            default:
+                list = repository.findByItemOwnerId(ownerId, sortDesc);
+        }
+
+        List<BookingDto> res = list.stream().map(BookingMapper::toBookingDto)
+                .collect(Collectors.toList());
+        return res;
     }
 
     @Override
@@ -147,35 +200,13 @@ public class BookingServiceImpl implements BookingService {
         return BookingMapper.toBookingDto(booking);
     }
 
-    private List<BookingDto> filterByState(List<BookingDto> list, String stateName) {
-
+    private static State getState(String stateName) {
         State state;
         try {
             state = State.valueOf(stateName);
         } catch (IllegalArgumentException e) {
             throw new StatusException("Unknown state: " + stateName);
         }
-
-        LocalDateTime now = LocalDateTime.now();
-        switch (state) {
-            case FUTURE:
-                return list.stream().filter(item -> now.isBefore(item.getStart())).collect(Collectors.toList());
-            case PAST:
-                return list.stream().filter(item -> now.isAfter(item.getEnd())).collect(Collectors.toList());
-            case WAITING:
-                return list.stream().filter(item -> item.getStatus() == BookingStatus.WAITING).collect(Collectors.toList());
-            case REJECTED:
-                return list.stream().filter(item -> item.getStatus() == BookingStatus.REJECTED).collect(Collectors.toList());
-            case CURRENT:
-                log.info("CURRENT before: {}", list);
-                List<BookingDto> res = list.stream()
-                        .filter(item -> !now.isBefore(item.getStart()))
-                        .filter(item -> !now.isAfter(item.getEnd()))
-                        .collect(Collectors.toList());
-                log.info("CURRENT after: {}", res);
-                return res;
-            default:
-                return list;
-        }
+        return state;
     }
 }
