@@ -3,6 +3,8 @@ package ru.practicum.shareit.item;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,8 +82,9 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> getItemsByOwner(long ownerId) {
-        List<ItemDto> res = repository.findByOwnerId(ownerId).stream()
+    public List<ItemDto> getItemsByOwner(long ownerId, int from, int size) {
+        Pageable pageable = PageRequest.of(from / size, size);
+        List<ItemDto> res = repository.findByOwnerId(ownerId, pageable).toList().stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
         List<Long> itemIds = res.stream().map(ItemDto::getId).collect(Collectors.toList());
@@ -111,11 +114,12 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> search(String searchText) {
+    public List<ItemDto> search(String searchText, int from, int size) {
         if (searchText.isBlank()) {
             return List.of();
         }
-        List<ItemDto> res = repository.search(searchText)
+        Pageable pageable = PageRequest.of(from / size, size);
+        List<ItemDto> res = repository.search(searchText, pageable).toList()
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());

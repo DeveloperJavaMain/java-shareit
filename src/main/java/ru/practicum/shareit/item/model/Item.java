@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.model;
 import lombok.Data;
 import ru.practicum.shareit.user.model.User;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -27,4 +28,6 @@ public class Item {
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private User owner;
+    @Column(name = "request_id")
+    private Long requestId;
 }

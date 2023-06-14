@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoPost;
+import ru.practicum.shareit.exceptions.BadRequestException;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import java.util.List;
 
 @Slf4j
@@ -53,18 +55,31 @@ public class BookingController {
 
     @GetMapping
     public List<BookingDto> getList(@RequestParam(defaultValue = "ALL") String state,
-                                    @RequestHeader("X-Sharer-User-Id") Long userId) {
+                                    @RequestHeader("X-Sharer-User-Id") Long userId,
+                                    @RequestParam(defaultValue = "0")
+                                    @Min(0) int from,
+                                    @RequestParam(defaultValue = "10")
+                                    @Min(0) int size) {
         log.info("GET /bookings/state={}", state);
-
-        List<BookingDto> list = service.getListByBooker(userId, state);
+        if (from < 0 || size <= 0) {
+            throw new BadRequestException("from должно быть положительным, size больше 0");
+        }
+        List<BookingDto> list = service.getListByBooker(userId, state, from, size);
         return list;
     }
 
     @GetMapping("/owner")
     public List<BookingDto> getListByOwner(@RequestParam(defaultValue = "ALL") String state,
-                                           @RequestHeader("X-Sharer-User-Id") Long userId) {
+                                           @RequestHeader("X-Sharer-User-Id") Long userId,
+                                           @RequestParam(defaultValue = "0")
+                                           @Min(0) int from,
+                                           @RequestParam(defaultValue = "10")
+                                           @Min(0) int size) {
         log.info("GET /bookings/state={}", state);
-        List<BookingDto> list = service.getListByOwner(userId, state);
+        if (from < 0 || size <= 0) {
+            throw new BadRequestException("from должно быть положительным, size больше 0");
+        }
+        List<BookingDto> list = service.getListByOwner(userId, state, from, size);
         return list;
     }
 }

@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dao.BookingRepository;
@@ -76,7 +78,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getListByBooker(long bookerId, String stateName) {
+    public List<BookingDto> getListByBooker(long bookerId, String stateName, int from, int size) {
+        Pageable pageable = PageRequest.of(from / size, size, sortDesc);
         User user = userRepository.findById(bookerId)
                 .orElseThrow(() -> new NotFoundException("User #" + bookerId + " not found"));
         List<Booking> list;
@@ -86,22 +89,22 @@ public class BookingServiceImpl implements BookingService {
 
         switch (state) {
             case FUTURE:
-                list = repository.findByBookerIdAndStartAfter(bookerId, now, sortDesc);
+                list = repository.findByBookerIdAndStartAfter(bookerId, now, pageable).toList();
                 break;
             case PAST:
-                list = repository.findByBookerIdAndEndBefore(bookerId, now, sortDesc);
+                list = repository.findByBookerIdAndEndBefore(bookerId, now, pageable).toList();
                 break;
             case WAITING:
-                list = repository.findByBookerIdAndStatus(bookerId, BookingStatus.WAITING, sortDesc);
+                list = repository.findByBookerIdAndStatus(bookerId, BookingStatus.WAITING, pageable).toList();
                 break;
             case REJECTED:
-                list = repository.findByBookerIdAndStatus(bookerId, BookingStatus.REJECTED, sortDesc);
+                list = repository.findByBookerIdAndStatus(bookerId, BookingStatus.REJECTED, pageable).toList();
                 break;
             case CURRENT:
-                list = repository.findByBookerIdAndStartBeforeAndEndAfter(bookerId, now, now, sortDesc);
+                list = repository.findByBookerIdAndStartBeforeAndEndAfter(bookerId, now, now, pageable).toList();
                 break;
             default:
-                list = repository.findByBooker_Id(bookerId, sortDesc);
+                list = repository.findByBooker_Id(bookerId, pageable).toList();
         }
 
         List<BookingDto> res = list.stream().map(BookingMapper::toBookingDto)
@@ -110,7 +113,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getListByOwner(long ownerId, String stateName) {
+    public List<BookingDto> getListByOwner(long ownerId, String stateName, int from, int size) {
+        Pageable pageable = PageRequest.of(from / size, size, sortDesc);
         User user = userRepository.findById(ownerId)
                 .orElseThrow(() -> new NotFoundException("User #" + ownerId + " not found"));
         List<Booking> list;
@@ -120,22 +124,22 @@ public class BookingServiceImpl implements BookingService {
 
         switch (state) {
             case FUTURE:
-                list = repository.findByItemOwnerIdAndStartAfter(ownerId, now, sortDesc);
+                list = repository.findByItemOwnerIdAndStartAfter(ownerId, now, pageable).toList();
                 break;
             case PAST:
-                list = repository.findByItemOwnerIdAndEndBefore(ownerId, now, sortDesc);
+                list = repository.findByItemOwnerIdAndEndBefore(ownerId, now, pageable).toList();
                 break;
             case WAITING:
-                list = repository.findByItemOwnerIdAndStatus(ownerId, BookingStatus.WAITING, sortDesc);
+                list = repository.findByItemOwnerIdAndStatus(ownerId, BookingStatus.WAITING, pageable).toList();
                 break;
             case REJECTED:
-                list = repository.findByItemOwnerIdAndStatus(ownerId, BookingStatus.REJECTED, sortDesc);
+                list = repository.findByItemOwnerIdAndStatus(ownerId, BookingStatus.REJECTED, pageable).toList();
                 break;
             case CURRENT:
-                list = repository.findByItemOwnerIdAndStartBeforeAndEndAfter(ownerId, now, now, sortDesc);
+                list = repository.findByItemOwnerIdAndStartBeforeAndEndAfter(ownerId, now, now, pageable).toList();
                 break;
             default:
-                list = repository.findByItemOwnerId(ownerId, sortDesc);
+                list = repository.findByItemOwnerId(ownerId, pageable).toList();
         }
 
         List<BookingDto> res = list.stream().map(BookingMapper::toBookingDto)

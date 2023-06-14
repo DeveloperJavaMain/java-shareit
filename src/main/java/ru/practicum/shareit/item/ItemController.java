@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.common.Create;
 import ru.practicum.shareit.common.Update;
+import ru.practicum.shareit.exceptions.BadRequestException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.CommentDtoPost;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -15,6 +16,7 @@ import ru.practicum.shareit.user.UserService;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import java.util.List;
 
 @Slf4j
@@ -63,16 +65,30 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getItemsByOwner(@RequestHeader("X-Sharer-User-Id") Long userId) {
+    public List<ItemDto> getItemsByOwner(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                         @RequestParam(defaultValue = "0")
+                                         @Min(0) int from,
+                                         @RequestParam(defaultValue = "10")
+                                         @Min(0) int size) {
         log.info("GET /items/ userId={}", userId);
+        if (from < 0 || size <= 0) {
+            throw new BadRequestException("from должно быть положительным, size больше 0");
+        }
         UserDto user = userService.getUser(userId);
-        return service.getItemsByOwner(userId);
+        return service.getItemsByOwner(userId, from, size);
     }
 
     @GetMapping("/search")
-    public List<ItemDto> search(@RequestParam String text) {
+    public List<ItemDto> search(@RequestParam String text,
+                                @RequestParam(defaultValue = "0")
+                                @Min(0) int from,
+                                @RequestParam(defaultValue = "10")
+                                @Min(0) int size) {
         log.info("GET /items/search");
-        return service.search(text);
+        if (from < 0 || size <= 0) {
+            throw new BadRequestException("from должно быть положительным, size больше 0");
+        }
+        return service.search(text, from, size);
     }
 
     @PostMapping("/{itemId}/comment")
