@@ -37,9 +37,9 @@ public class BookingController {
     }
 
     @PatchMapping("/{itemId}")
-    public BookingDto updateItem(@PathVariable long itemId,
-                                 @RequestParam Boolean approved,
-                                 @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public BookingDto approve(@PathVariable long itemId,
+                              @RequestParam Boolean approved,
+                              @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("PATCH /bookings/{} {}", itemId, approved);
         BookingDto dto = service.approve(itemId, userId, approved);
         log.info("{}", dto);
@@ -47,8 +47,8 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
-    public BookingDto getItemById(@PathVariable long id,
-                                  @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public BookingDto getById(@PathVariable long id,
+                              @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /bookings/{}", id);
         return service.getById(id, userId);
     }
