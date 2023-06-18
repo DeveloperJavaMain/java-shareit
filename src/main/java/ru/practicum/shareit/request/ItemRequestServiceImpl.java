@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.exceptions.BadRequestException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.dao.ItemRepository;
@@ -71,6 +72,9 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public List<ItemRequestDtoResponse> getAll(int from, int size, long userId) {
+        if (from < 0 || size <= 0) {
+            throw new BadRequestException("from должно быть положительным, size больше 0");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User #" + userId + " not found"));
         Pageable pageable = PageRequest.of(from / size, size, sortDesc);

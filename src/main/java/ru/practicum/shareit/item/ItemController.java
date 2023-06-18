@@ -7,7 +7,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.common.Create;
 import ru.practicum.shareit.common.Update;
-import ru.practicum.shareit.exceptions.BadRequestException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.CommentDtoPost;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -71,9 +70,6 @@ public class ItemController {
                                          @RequestParam(defaultValue = "10")
                                          @Min(0) int size) {
         log.info("GET /items/ userId={}", userId);
-        if (from < 0 || size <= 0) {
-            throw new BadRequestException("from должно быть положительным, size больше 0");
-        }
         UserDto user = userService.getUser(userId);
         return service.getItemsByOwner(userId, from, size);
     }
@@ -85,9 +81,6 @@ public class ItemController {
                                 @RequestParam(defaultValue = "10")
                                 @Min(0) int size) {
         log.info("GET /items/search");
-        if (from < 0 || size <= 0) {
-            throw new BadRequestException("from должно быть положительным, size больше 0");
-        }
         return service.search(text, from, size);
     }
 

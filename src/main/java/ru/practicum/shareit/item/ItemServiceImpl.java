@@ -83,6 +83,10 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> getItemsByOwner(long ownerId, int from, int size) {
+        if (from < 0 || size <= 0) {
+            throw new BadRequestException("from должно быть положительным, size больше 0");
+        }
+
         Pageable pageable = PageRequest.of(from / size, size);
         List<ItemDto> res = repository.findByOwnerId(ownerId, pageable).toList().stream()
                 .map(ItemMapper::toItemDto)
@@ -106,7 +110,7 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.groupingBy(c -> c.getItem().getId(), Collectors.toList()));
 
         for (ItemDto item : res) {
-            item.setComments(comments.get(item.getId()));
+            item.setComments(comments.getOrDefault(item.getId(), List.of()));
             item.setLastBooking(getFirstBookingDtoItem(lastBookings.get(item.getId())));
             item.setNextBooking(getFirstBookingDtoItem(nextBookings.get(item.getId())));
         }
@@ -115,6 +119,10 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> search(String searchText, int from, int size) {
+        if (from < 0 || size <= 0) {
+            throw new BadRequestException("from должно быть положительным, size больше 0");
+        }
+
         if (searchText.isBlank()) {
             return List.of();
         }

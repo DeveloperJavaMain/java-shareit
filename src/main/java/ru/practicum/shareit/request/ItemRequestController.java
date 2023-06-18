@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.common.Create;
-import ru.practicum.shareit.exceptions.BadRequestException;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestDtoPost;
 import ru.practicum.shareit.request.dto.ItemRequestDtoResponse;
@@ -57,9 +56,6 @@ public class ItemRequestController {
                                                 @Positive int size,
                                                 @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("GET /requests/all?from={}&size={}", from, size);
-        if (from < 0 || size <= 0) {
-            throw new BadRequestException("from должно быть положительным, size больше 0");
-        }
         return service.getAll(from, size, userId);
     }
 }

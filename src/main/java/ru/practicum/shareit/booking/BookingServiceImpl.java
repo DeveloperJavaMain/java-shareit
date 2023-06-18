@@ -13,6 +13,7 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoPost;
 import ru.practicum.shareit.booking.dto.State;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.exceptions.BadRequestException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.StatusException;
 import ru.practicum.shareit.exceptions.ValidationException;
@@ -71,14 +72,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getAll() {
-        List<BookingDto> res = repository.findAll().stream()
-                .map(BookingMapper::toBookingDto).collect(Collectors.toList());
-        return res;
-    }
-
-    @Override
     public List<BookingDto> getListByBooker(long bookerId, String stateName, int from, int size) {
+        if (from < 0 || size <= 0) {
+            throw new BadRequestException("from должно быть положительным, size больше 0");
+        }
+
         Pageable pageable = PageRequest.of(from / size, size, sortDesc);
         User user = userRepository.findById(bookerId)
                 .orElseThrow(() -> new NotFoundException("User #" + bookerId + " not found"));
@@ -114,6 +112,10 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingDto> getListByOwner(long ownerId, String stateName, int from, int size) {
+        if (from < 0 || size <= 0) {
+            throw new BadRequestException("from должно быть положительным, size больше 0");
+        }
+
         Pageable pageable = PageRequest.of(from / size, size, sortDesc);
         User user = userRepository.findById(ownerId)
                 .orElseThrow(() -> new NotFoundException("User #" + ownerId + " not found"));
@@ -147,22 +149,6 @@ public class BookingServiceImpl implements BookingService {
         return res;
     }
 
-    @Override
-    @Transactional
-    public BookingDto update(BookingDto bookingDto, long bookerId) {
-        Item item = itemRepository.findById(bookingDto.getItem().getId())
-                .orElseThrow(() -> new NotFoundException("Item #" + bookingDto.getItem().getId() + " not found"));
-        User user = userRepository.findById(bookerId)
-                .orElseThrow(() -> new NotFoundException("User #" + bookerId + " not found"));
-
-        Booking booking = repository.getReferenceById(bookingDto.getId());
-        if (bookingDto.getStatus() != null) {
-            booking.setStatus(bookingDto.getStatus());
-        }
-
-        repository.save(booking);
-        return BookingMapper.toBookingDto(booking);
-    }
 
     @Override
     @Transactional
@@ -195,14 +181,6 @@ public class BookingServiceImpl implements BookingService {
         return BookingMapper.toBookingDto(repository.getReferenceById(id));
     }
 
-    @Override
-    @Transactional
-    public BookingDto delete(long id) {
-        Booking booking = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Booking #" + id + " not found"));
-        repository.deleteById(id);
-        return BookingMapper.toBookingDto(booking);
-    }
 
     private static State getState(String stateName) {
         State state;

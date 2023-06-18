@@ -90,4 +90,17 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(List.of(dto))));
     }
+
+    @Test
+    void deleteUser() throws Exception {
+        when(userService.deleteUser(anyLong()))
+                .thenReturn(dto);
+        mvc.perform(delete("/users/1")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Sharer-User-Id", 1L)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
 }

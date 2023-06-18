@@ -7,6 +7,8 @@ import ru.practicum.shareit.item.dto.ItemDtoForRequest;
 import ru.practicum.shareit.item.dto.ItemDtoPost;
 import ru.practicum.shareit.item.model.Item;
 
+import java.util.List;
+
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ItemMapper {
     public static ItemDto toItemDto(Item item) {
@@ -15,7 +17,7 @@ public class ItemMapper {
                 item.getName(),
                 item.getDescription(),
                 item.isAvailable(),
-                null, null, null,
+                null, null, List.of(),
                 item.getRequestId()
         );
     }
