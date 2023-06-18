@@ -51,7 +51,7 @@ class ErrorHandlerTest {
 
     @Test
     void handleException() {
-        Exception e = new Exception();
+        Exception e = new Exception("exception");
         ErrorResponse response = handler.handleException(e);
         assertNotNull(response);
         assertNotNull(response.getError());
