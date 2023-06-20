@@ -21,13 +21,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class ItemRequestServiceTest {
 
     @Autowired
-    ItemRequestService service;
+    private ItemRequestService service;
     @Autowired
-    UserService userService;
+    private UserService userService;
 
-    ItemRequestDtoPost post;
-    UserDto user1;
-    UserDto user2;
+    private ItemRequestDtoPost post;
+    private UserDto user1;
+    private UserDto user2;
 
     @BeforeEach
     void setUp() {

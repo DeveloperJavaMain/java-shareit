@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CommentMapperTest {
 
-    User user = new User(1, "user", "mail@google.com");
-    Item item = new Item(1, "name", "description", true, user, null);
+    private User user = new User(1, "user", "mail@google.com");
+    private Item item = new Item(1, "name", "description", true, user, null);
 
     @Test
     void toCommentDto() {

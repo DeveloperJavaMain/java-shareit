@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoForRequest;
@@ -11,10 +10,6 @@ import ru.practicum.shareit.user.model.User;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ItemMapperTest {
-
-    @BeforeEach
-    void setUp() {
-    }
 
     @Test
     void toItemDto() {

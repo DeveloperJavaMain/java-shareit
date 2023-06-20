@@ -19,10 +19,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserServiceTest {
 
     @Autowired
-    UserService userService;
+    private UserService userService;
 
-    User user;
-    UserDto dto;
+    private User user;
+    private UserDto dto;
 
     @BeforeEach
     void setUp() {

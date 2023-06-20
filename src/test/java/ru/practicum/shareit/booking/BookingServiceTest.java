@@ -27,20 +27,20 @@ import static org.junit.jupiter.api.Assertions.*;
 class BookingServiceTest {
 
     @Autowired
-    ItemService itemService;
+    private ItemService itemService;
     @Autowired
-    UserService userService;
+    private UserService userService;
     @Autowired
-    BookingService bookingService;
+    private BookingService bookingService;
 
-    ItemDtoPost itemDtoPost;
-    UserDto user1;
-    UserDto user2;
-    UserDto user3;
-    LocalDateTime from;
-    LocalDateTime till;
-    ItemDto itemDto;
-    BookingDtoPost bookingDtoPost;
+    private ItemDtoPost itemDtoPost;
+    private UserDto user1;
+    private UserDto user2;
+    private UserDto user3;
+    private LocalDateTime from;
+    private LocalDateTime till;
+    private ItemDto itemDto;
+    private BookingDtoPost bookingDtoPost;
 
     @BeforeEach
     void setUp() {
@@ -60,6 +60,10 @@ class BookingServiceTest {
         BookingDto dto = bookingService.create(bookingDtoPost, user2.getId());
         assertNotNull(dto);
         assertEquals(bookingDtoPost.getItemId(), dto.getItem().getId());
+    }
+
+    @Test
+    void createThrow() {
         assertThrows(NotFoundException.class, () -> bookingService.create(bookingDtoPost, user1.getId()));
         itemDtoPost.setAvailable(false);
         itemService.updateItem(itemDtoPost, itemDto.getId(), user1.getId());
@@ -91,7 +95,10 @@ class BookingServiceTest {
         res = bookingService.getListByBooker(user1.getId(),
                 "CURRENT", 0, 100);
         assertEquals(0, res.size());
+    }
 
+    @Test
+    void getListByBookerThrow() {
         assertThrows(BadRequestException.class, () -> bookingService.getListByBooker(user2.getId(),
                 "PAST", -1, 100));
     }
@@ -119,6 +126,10 @@ class BookingServiceTest {
         res = bookingService.getListByOwner(user2.getId(),
                 "CURRENT", 0, 100);
         assertEquals(0, res.size());
+    }
+
+    @Test
+    void getListByOwnerThrow() {
         assertThrows(BadRequestException.class, () -> bookingService.getListByOwner(user2.getId(),
                 "PAST", -1, 100));
         assertThrows(StatusException.class, () -> bookingService.getListByOwner(user2.getId(),
@@ -132,7 +143,12 @@ class BookingServiceTest {
         bookingService.approve(dto.getId(), user1.getId(), true);
         BookingDto res = bookingService.getById(dto.getId(), user1.getId());
         assertEquals(BookingStatus.APPROVED, res.getStatus());
-        //assertThrows(NotFoundException.class, () -> bookingService.approve(dto.getId(), 10, true));
+    }
+
+    @Test
+    void approveThrow() {
+        BookingDto dto = bookingService.create(bookingDtoPost, user2.getId());
+        bookingService.approve(dto.getId(), user1.getId(), true);
         assertThrows(NotFoundException.class, () -> bookingService.approve(dto.getId(), user2.getId(), true));
         assertThrows(ValidationException.class, () -> bookingService.approve(dto.getId(), user1.getId(), true));
     }
@@ -142,6 +158,11 @@ class BookingServiceTest {
         BookingDto dto = bookingService.create(bookingDtoPost, user2.getId());
         BookingDto res = bookingService.getById(dto.getId(), user1.getId());
         assertEquals(dto.getId(), res.getId());
+    }
+
+    @Test
+    void getByIdThrow() {
+        BookingDto dto = bookingService.create(bookingDtoPost, user2.getId());
         assertThrows(NotFoundException.class, () -> bookingService.getById(dto.getId(), user3.getId()));
     }
 }

@@ -28,15 +28,15 @@ import static org.junit.jupiter.api.Assertions.*;
 class ItemServiceTest {
 
     @Autowired
-    ItemService itemService;
+    private ItemService itemService;
     @Autowired
-    UserService userService;
+    private UserService userService;
     @Autowired
-    BookingService bookingService;
+    private BookingService bookingService;
 
-    ItemDtoPost post;
-    UserDto user1;
-    UserDto user2;
+    private ItemDtoPost post;
+    private UserDto user1;
+    private UserDto user2;
 
     @BeforeEach
     void setUp() {
@@ -65,7 +65,6 @@ class ItemServiceTest {
         ItemDto dto = itemService.createItem(post, user1.getId());
         List<ItemDto> res = itemService.getItemsByOwner(user1.getId(), 0, 100);
         assertNotNull(res);
-        ;
         assertEquals(1, res.size());
         assertEquals(dto, res.get(0));
         assertThrows(BadRequestException.class, () ->
