@@ -15,6 +15,7 @@ import ru.practicum.shareit.user.UserService;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import java.util.List;
 
 @Slf4j
@@ -63,16 +64,24 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getItemsByOwner(@RequestHeader("X-Sharer-User-Id") Long userId) {
+    public List<ItemDto> getItemsByOwner(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                         @RequestParam(defaultValue = "0")
+                                         @Min(0) int from,
+                                         @RequestParam(defaultValue = "10")
+                                         @Min(0) int size) {
         log.info("GET /items/ userId={}", userId);
         UserDto user = userService.getUser(userId);
-        return service.getItemsByOwner(userId);
+        return service.getItemsByOwner(userId, from, size);
     }
 
     @GetMapping("/search")
-    public List<ItemDto> search(@RequestParam String text) {
+    public List<ItemDto> search(@RequestParam String text,
+                                @RequestParam(defaultValue = "0")
+                                @Min(0) int from,
+                                @RequestParam(defaultValue = "10")
+                                @Min(0) int size) {
         log.info("GET /items/search");
-        return service.search(text);
+        return service.search(text, from, size);
     }
 
     @PostMapping("/{itemId}/comment")

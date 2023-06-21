@@ -16,35 +16,28 @@ import java.util.NoSuchElementException;
 public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> handleValidationException(final ConflictException e) {
-        log.info("Статус {}: {}",HttpStatus.CONFLICT,e.getMessage(),e);
-        return Map.of("Conflict in data", e.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> handleValidationException(final org.springframework.dao.DataIntegrityViolationException e) {
+    public Map<String, String> handle(final org.springframework.dao.DataIntegrityViolationException e) {
         log.info("Статус {}: {}",HttpStatus.CONFLICT,e.getMessage(),e);
         return Map.of("DataIntegrityViolation in data", e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationException(final ValidationException e) {
+    public Map<String, String> handle(final ValidationException e) {
         log.info("Статус {}: {}",HttpStatus.BAD_REQUEST,e.getMessage(),e);
         return Map.of("Validation Error", e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationException(final BadRequestException e) {
+    public Map<String, String> handle(final BadRequestException e) {
         log.info("Статус {}: {}",HttpStatus.BAD_REQUEST,e.getMessage(),e);
         return Map.of("Validation Error", e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationException(final MethodArgumentNotValidException e) {
+    public Map<String, String> handle(final MethodArgumentNotValidException e) {
         log.info("Статус {}: {}",HttpStatus.BAD_REQUEST,e.getMessage(),e);
         return Map.of("Validation Error", e.getMessage());
     }

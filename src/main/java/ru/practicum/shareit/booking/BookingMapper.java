@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoItem;
 import ru.practicum.shareit.booking.dto.BookingDtoPost;
-import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
@@ -28,18 +27,6 @@ public class BookingMapper {
                 .build();
     }
 
-    public static BookingDtoResponse toBookingDtoResponse(Booking booking) {
-        if (booking == null) {
-            return null;
-        }
-        return BookingDtoResponse.builder()
-                .id(booking.getId())
-                .item(ItemMapper.toItemDto(booking.getItem()))
-                .booker(UserMapper.toUserDto(booking.getBooker()))
-                .status(booking.getStatus())
-                .build();
-    }
-
     public static BookingDtoItem toBookingDtoItem(Booking booking) {
         if (booking == null) {
             return null;
@@ -49,20 +36,6 @@ public class BookingMapper {
                 .bookerId(booking.getBooker().getId())
                 .start(booking.getStart())
                 .end(booking.getEnd())
-                .build();
-    }
-
-    public static Booking toBooking(BookingDto dto, Item item, User booker) {
-        if (dto == null) {
-            return null;
-        }
-        return Booking.builder()
-                .id(dto.getId())
-                .start(dto.getStart())
-                .end(dto.getEnd())
-                .item(item)
-                .booker(booker)
-                .status(dto.getStatus())
                 .build();
     }
 
