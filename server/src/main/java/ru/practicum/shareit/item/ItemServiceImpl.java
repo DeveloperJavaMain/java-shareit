@@ -87,7 +87,7 @@ public class ItemServiceImpl implements ItemService {
             throw new BadRequestException("from должно быть положительным, size больше 0");
         }
 
-        Pageable pageable = PageRequest.of(from / size, size);
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "id"));
         List<ItemDto> res = repository.findByOwnerId(ownerId, pageable).toList().stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
