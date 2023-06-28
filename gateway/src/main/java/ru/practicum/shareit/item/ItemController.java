@@ -13,6 +13,7 @@ import ru.practicum.shareit.item.dto.ItemDtoPost;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
 
 @Slf4j
 @RestController
@@ -56,7 +57,7 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Object> search(@RequestParam String text,
+    public ResponseEntity<Object> search(@RequestParam @NotEmpty String text,
                                          @RequestParam(defaultValue = "0")
                                          @Min(0) int from,
                                          @RequestParam(defaultValue = "10")

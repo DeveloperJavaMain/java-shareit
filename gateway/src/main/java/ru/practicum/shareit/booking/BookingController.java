@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.booking.dto.BookingDtoPost;
+import ru.practicum.shareit.booking.dto.State;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -55,7 +56,8 @@ public class BookingController {
                                     @RequestParam(defaultValue = "10")
                                     @Min(0) int size) {
         log.info("GET /bookings/state={}", state);
-        return client.getListByBooker(userId, state, from, size);
+        State _state = State.valueOf(state);
+        return client.getListByBooker(userId, _state, from, size);
     }
 
     @GetMapping("/owner")
@@ -66,6 +68,7 @@ public class BookingController {
                                            @RequestParam(defaultValue = "10")
                                            @Min(0) int size) {
         log.info("GET /bookings/state={}", state);
-        return client.getListByOwner(userId, state, from, size);
+        State _state = State.valueOf(state);
+        return client.getListByOwner(userId, _state, from, size);
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.shareit.booking.dto.BookingDtoPost;
+import ru.practicum.shareit.booking.dto.State;
 import ru.practicum.shareit.client.BaseClient;
 import ru.practicum.shareit.exceptions.BadRequestException;
 
@@ -34,18 +35,18 @@ public class BookingClient extends BaseClient {
         return post("", userId, requestDto);
     }
 
-    public ResponseEntity<Object> getListByBooker(Long userId, String state, int from, int size) {
+    public ResponseEntity<Object> getListByBooker(Long userId, State state, int from, int size) {
         Map<String, Object> parameters = Map.of(
-                "state", state,
+                "state", state.name(),
                 "from", from,
                 "size", size
         );
         return get("?state={state}&from={from}&size={size}", userId, parameters);
     }
 
-    public ResponseEntity<Object> getListByOwner(Long userId, String state, int from, int size) {
+    public ResponseEntity<Object> getListByOwner(Long userId, State state, int from, int size) {
         Map<String, Object> parameters = Map.of(
-                "state", state,
+                "state", state.name(),
                 "from", from,
                 "size", size
         );
