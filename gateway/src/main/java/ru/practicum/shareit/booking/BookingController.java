@@ -58,8 +58,8 @@ public class BookingController {
                                           @Min(0) int size) {
         log.info("GET /bookings/state={}", state);
         try {
-            State _state = State.valueOf(state);
-            return client.getListByBooker(userId, _state, from, size);
+            State tstate = State.valueOf(state);
+            return client.getListByBooker(userId, tstate, from, size);
         } catch (IllegalArgumentException e) {
             throw new StatusException("Unknown state: " + state);
         }
@@ -74,8 +74,8 @@ public class BookingController {
                                                  @Min(0) int size) {
         log.info("GET /bookings/state={}", state);
         try {
-            State _state = State.valueOf(state);
-            return client.getListByOwner(userId, _state, from, size);
+            State tstate = State.valueOf(state);
+            return client.getListByOwner(userId, tstate, from, size);
         } catch (IllegalArgumentException e) {
             throw new StatusException("Unknown state: " + state);
         }
